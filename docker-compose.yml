@@ -1,0 +1,12 @@
+mysql:
+  build: ./mysql
+  volumes:
+    - /opt/containers/personal/mysql:/var/lib/mysql
+web:
+  build: ./web
+  ports:
+    - 80:80
+  volumes:
+    - /opt/containers/personal/php:/var/www/html
+  links:
+    - mysql:mysql
