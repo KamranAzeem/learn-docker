@@ -1,5 +1,4 @@
-# FROM php:7-apache
-FROM php:5.5-apache
+FROM php:7-apache
 
 # Note: mycrypt extension is not provided with the PHP source since 7.2.
 #       Instead it is available through PECL. 
