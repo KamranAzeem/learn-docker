@@ -4,21 +4,12 @@ This repo is used to teach Docker to whom this technology is new, and they want 
 * IT managers
 
 # Topics:
-The objective is to teach basic concepts about Docker , as well as demostrate the usage of Docker. The following is demonstrated:
+The objective is to teach basic concepts about Docker, and demostrate the usage of Docker. The following is demonstrated:
 * Docker (running natively on Linux)
-* Docker-Machine (On Windows and Mac)
 * Docker-Compose 
 
-# Organization of this document:
-This document is organized in two main parts.
-* Part 1: A presentation about Docker and related technologies.
-* Part 2: Hands on demo about Docker, Docker-Machine and Docker-Compose.
+# Resources:
+* The related presentation is [here](https://docs.google.com/presentation/d/1Xnf5X6dxLQ9uX5vGlmZ36Y8F8NqfHTzZgEE954010hA/edit?usp=sharing).
+* The sample files for various exercises are in within this repo, organized into separate directories.
 
-# Part 1:
-The presentation is here: (Link to presentation)[Link to presentation]
-
-# Part 2:
-The demo is shown using the commands shown in sub-sections below. Any files related to the the demonstration are part of this repository in the related directories.
-
-## Docker (natively on Linux): 
 
