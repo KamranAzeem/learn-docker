@@ -1,0 +1,25 @@
+FROM php:5.5-apache
+
+# The following setup works only with php:5.5-apache.
+# To use other / later versions, some adjustment will be needed.
+
+RUN apt-get update && apt-get install -y \
+      libmcrypt-dev libjpeg-dev libpng12-dev libfreetype6-dev  \
+    && docker-php-ext-install iconv mcrypt \
+    && docker-php-ext-configure gd \
+       --with-freetype-dir=/usr/include/ \
+       --with-jpeg-dir=/usr/include/ \
+    && docker-php-ext-install gd
+
+
+# Copy any custom apache configuration / virtualhost configuraiton file at this point.
+# Put your apache config files in /etc/apache2/sites-enabled/
+# Main httpd.conf file is located at: /usr/local/apache2/conf/httpd.conf
+
+# Default document-root is /var/www/html
+# Lets put in default / basic files in document-root. 
+# We can always mount dynamic volumes later.
+
+COPY index.html /var/www/html/
+COPY index.php 	/var/www/html/
+
