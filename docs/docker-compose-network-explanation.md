@@ -1,3 +1,5 @@
+Here is how the application's (compose) network looks like when inspected.
+```
 [kamran@kworkhorse compose]$ docker network inspect compose_webdbnet
 [
     {
@@ -54,6 +56,11 @@
         }
     }
 ]
+[kamran@kworkhorse compose]$
+```
+
+This shows the sockets on which various services are listening on my host computer:
+```
 [kamran@kworkhorse compose]$ netstat -ntlp
 (Not all processes could be identified, non-owned process info
  will not be shown, you would have to be root to see it all.)
@@ -67,29 +74,22 @@ tcp        0      0 192.168.0.14:10010      0.0.0.0:*               LISTEN      
 tcp6       0      0 :::80                   :::*                    LISTEN      -                   
 tcp6       0      0 ::1:631                 :::*                    LISTEN      -                   
 tcp6       0      0 :::443                  :::*                    LISTEN      -                   
+[kamran@kworkhorse compose]$
+```
+
+Simple output of docker ps, showing running containers:
+```
 [kamran@kworkhorse compose]$ docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                                      NAMES
 2599f4218d28        compose_nginx       "nginx -g 'daemon of…"   10 hours ago        Up 10 hours         0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp   compose_nginx_1
 a940aa8345ce        compose_web         "docker-php-entrypoi…"   10 hours ago        Up 10 hours         80/tcp                                     compose_web_1
 b019610df0f7        mysql:latest        "docker-entrypoint.s…"   10 hours ago        Up 10 hours         3306/tcp                                   compose_db_1
-[kamran@kworkhorse compose]$ docker network inspect compose_webdbnet | egrep "Name|iv4"
-        "Name": "compose_webdbnet",
-                "Name": "compose_nginx_1",
-                "Name": "compose_web_1",
-                "Name": "compose_db_1",
-[kamran@kworkhorse compose]$ docker network inspect compose_webdbnet | egrep -i "Name|iv4"
-        "Name": "compose_webdbnet",
-                "Name": "compose_nginx_1",
-                "Name": "compose_web_1",
-                "Name": "compose_db_1",
-[kamran@kworkhorse compose]$ docker network inspect compose_webdbnet | egrep -i "Name|ipv4"
-        "Name": "compose_webdbnet",
-                "Name": "compose_nginx_1",
-                "IPv4Address": "172.20.0.4/16",
-                "Name": "compose_web_1",
-                "IPv4Address": "172.20.0.3/16",
-                "Name": "compose_db_1",
-                "IPv4Address": "172.20.0.2/16",
+[kamran@kworkhorse compose]$
+```
+
+
+The following shows all of the network interfaces on my host computer. Interface # `45` `br-1a05d2c88bec` is the one, on which my containers from the *compose* app are conntected.
+```
 [kamran@kworkhorse compose]$ ip addr show
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -172,4 +172,4 @@ b019610df0f7        mysql:latest        "docker-entrypoint.s…"   10 hours ago 
     inet6 fe80::4454:98ff:feb8:a869/64 scope link 
        valid_lft forever preferred_lft forever
 [kamran@kworkhorse compose]$ 
-
+```
