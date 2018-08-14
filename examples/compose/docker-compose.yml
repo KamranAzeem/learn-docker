@@ -1,4 +1,4 @@
-mysql:
+db:
   build: ./mysql
   volumes:
     - /opt/containers/personal/mysql:/var/lib/mysql
@@ -9,4 +9,4 @@ web:
   volumes:
     - /opt/containers/personal/php:/var/www/html
   links:
-    - mysql:mysql
+    - db:db

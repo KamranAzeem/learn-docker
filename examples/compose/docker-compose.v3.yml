@@ -1,0 +1,37 @@
+version: "3"
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /opt/containers/personal/nginx/certs:/certs
+    depends_on: 
+      - web
+    networks:
+      - webdbnet
+  web:
+    build: ./web
+    volumes:
+      # Example of host volume mounted in container
+      # - /opt/containers/personal/php:/var/www/html
+      # Example of docker volume mounted in container
+      - web-data:/var/www/html
+    networks:
+      - webdbnet
+  db:
+    # build: ./mysql
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - /opt/containers/personal/mysql:/var/lib/mysql
+    networks:
+      - webdbnet
+    
+networks:
+  webdbnet:
+
+volumes:
+  web-data:

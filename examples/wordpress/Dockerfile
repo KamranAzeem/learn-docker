@@ -1,4 +1,4 @@
-FROM php:7-apache
+FROM php:7.2-apache
 
 # Note: mycrypt extension is not provided with the PHP source since 7.2.
 #       Instead it is available through PECL. 
@@ -19,7 +19,7 @@ RUN    apt-get update \
     && tar xzf latest.tar.gz \
     && mv wordpress/* /var/www/html/ \
     && chown 33:33 /var/www/html -R
-    
+
 
 
 #######################################################################################
