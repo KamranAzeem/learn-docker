@@ -1,0 +1,23 @@
+version: "3"
+services:
+  traefik:
+    image: traefik:alpine
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/containers/personal/traefik/traefik.toml:/etc/traefik/traefik.toml
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080 
+  nginx:
+    image: nginx:alpine 
+    labels:
+      - traefik.frontend.rule=Host:www.example.com,example.com
+    volumes:
+      - /opt/containers/personal/nginx/html:/usr/share/nginx/html
+  apache:
+    image: httpd:alpine
+    labels:
+      - traefik.frontend.rule=Host:www.example.net,example.net
+    volumes:
+      - /opt/containers/personal/apache/html:/usr/local/apache2/htdocs
