@@ -1,4 +1,4 @@
-# The easy guide for Traefik
+# Traefik made easy
 
 In this guide, I will show various ways traefik can be used as a reverse proxy for your (back-end) containers, on Docker (compose) and Kubernetes.
 
@@ -11,23 +11,21 @@ In this guide, I will show various ways traefik can be used as a reverse proxy f
 * Traefik running as reverse proxy for two different websites www.example.com, www.example.net,
 
 
-# VM:
+# VM setup:
+Traefik and it's backends will be running as systemd services.
 
-## traefik in front of Tomcat / Jenkins- VM
-Any one will do for the sake of example, I will show tomcat only.
+## Traefik in front of Tomcat / Jenkins:
+In this guide, I will show traefik in-front of tomcat only.
 
 First, install Tomcat. 
 ```
 [root@centos7 ~]# yum -y install tomcat
-
-
 ```
 
-Note, both tomcat and jenkins use port 8080, so they cannot run at the same time, unless you change the listening port of one of them, then you can run both.
+**Note:** Both tomcat and jenkins use port 8080, so they cannot run at the same time, unless you change the listening port of one of them, then you can run both.
 
 ```
 [root@centos7 ~]# systemctl start tomcat
-
 
 [root@centos7 ~]# systemctl status tomcat
 ● tomcat.service - Apache Tomcat Web Application Container
@@ -66,17 +64,14 @@ Make sure firewall allows ports 80,443 and 8080, 8090; or disable firewall compl
 
 
 Download a sample war file and place it in tomcat, so you have something to see! :)
-
 ```
 [root@centos7 ~]# curl -LO https://tomcat.apache.org/tomcat-7.0-doc/appdev/sample/sample.war
-
 
 [root@centos7 ~]# cp sample.war /usr/share/tomcat/webapps/
 ```
 
 
-Set a name for this vm in /etc/hosts, say tomcat.example.com , on host computer.
-
+Set a name for this vm in /etc/hosts, say tomcat.example.com , on host computer. Or, setup DNS properly.
 ```
 [root@kworkhorse ~]# vi /etc/hosts
 127.0.0.1   	localhost localhost.localdomain
@@ -89,7 +84,7 @@ Set a name for this vm in /etc/hosts, say tomcat.example.com , on host computer.
 ![Traefik-1.png](Traefik-1.png)
 
 
-Download the latest version of traffic from: https://github.com/containous/traefik/releases . It is a single binary file, so just download and place it in /usr/local/bin/ or somewhere else you like. It is about 60-70 MB in size.
+Download the latest version of traffic from: [https://github.com/containous/traefik/releases](https://github.com/containous/traefik/releases) . It is a single binary file, so just download and place it in `/usr/local/bin/` or somewhere else you like. It is about 60-70 MB in size.
 
 ```
 [root@centos7 ~]# curl -LO https://github.com/containous/traefik/releases/download/v1.7.7/traefik_linux-amd64
@@ -97,7 +92,7 @@ Download the latest version of traffic from: https://github.com/containous/traef
 [root@centos7 ~]# cp traefik_linux-amd64 /usr/local/bin/traefik
 ```
 
-Download the sample traefik config file from: https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml , and place in it /usr/local/etc/
+Download the sample traefik config file from: [https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml](https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml), and place in it `/usr/local/etc/` .
 
 ```
 [root@centos7 ~]# curl -LO https://raw.githubusercontent.com/containous/traefik/master/traefik.sample.toml
@@ -105,9 +100,8 @@ Download the sample traefik config file from: https://raw.githubusercontent.com/
 ```
 
 Adjust the traefik config file:
-
 ```
-[root@centos7 ~]# grep -v \# /usr/local/etc/traefik.toml  | egrep -v "^$"
+[root@centos7 ~]# cat /usr/local/etc/traefik.toml
 [entryPoints]
     [entryPoints.http]
     address = ":80"
@@ -133,13 +127,12 @@ Adjust the traefik config file:
 [root@centos7 ~]# 
 ```
 
-Since we have tomcat running on the same VM on port 8080, we can't run traefik's dashboard on 8080. So we change it to 8090.
+Since we have tomcat running on the same VM on port 8080, we can't run traefik's dashboard on 8080. So we change it to 8090, or any other port of your desire.
 
 Also, since this is a plain VM, we need to setup frontend and backend so traefik would know how to flow traffic. The special "file" directive is used for that. We can also setup traffic to watch an external rules file which contains the frontends and beckends routing. Of-course none of this is needed (normally) if traefik is talking to docker or kubernetes API. In our case in this particular example, we have neither docker, nor kubernetes - just plain simple VM.
 
 
 Create a systemd service file for Traefik. Not entirely necessary though.
-
 ```
 [root@centos7 ~]# vi traefik.service
 
@@ -155,9 +148,10 @@ ExecStart=/usr/local/bin/traefik  --configFile=/usr/local/etc/traefik.toml
 WantedBy=multi-user.target
 ```
 
-Enable and start the traefil service:
+Enable and start the traefik service:
 ```
 [root@centos7 ~]# cp traefik.service /etc/systemd/system/
+
 [root@centos7 ~]# systemctl daemon-reload
 
 [root@centos7 ~]# systemctl restart traefik
@@ -176,26 +170,23 @@ Jan 20 17:01:02 centos7 systemd[1]: Started Traefik reverse proxy / edge router.
 ```
 
 
-Two Screenshots , one with traffic dashboard, and the other with tomcat without 8080.
+Two Screenshots , one with traffic dashboard, and the other with tomcat without 8080:
+
 ![Traefik-2.png](Traefik-2.png)
 
 ![Traefik-3.png](Traefik-3.png)
 
 
-## Basic Authentication¶
+## Basic Authentication:
 
-It is important to secure the dashboard with some authentication. 
-
-Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate them.
-
-Users can be specified directly in the TOML file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence.
+It is important to secure the dashboard with some authentication. Passwords can be encoded in MD5, SHA1 and BCrypt: you can use htpasswd to generate them. Users can be specified directly in the TOML file, or indirectly by referencing an external file; if both are provided, the two are merged, with external file contents having precedence.
 
 ```
   [entryPoints.dashboard.auth.basic]
     users = ["admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa"]
 ```
 
-Generate the password using htpasswd utility - part of httpd-tools package on CENTOS.
+Generate the password using htpasswd utility - part of httpd-tools package on CENTOS:
 ```
 [root@centos7 ~]# htpasswd -B -C 8 -n admin
 New password: 
@@ -211,7 +202,7 @@ admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa
 * password = secret
 
 
-(show screenshot with auth)
+Here is screenshot with Authentication dialogue:
 ![Traefik-4.png](Traefik-4.png)
 
 # Docker-compose:
