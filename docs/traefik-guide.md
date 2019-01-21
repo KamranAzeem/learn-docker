@@ -1,5 +1,3 @@
-Check: [../../docs/traefik-guide.md](../../traefik-guide.md)
-
 # The easy guide for Traefik
 
 In this guide, I will show various ways traefik can be used as a reverse proxy for your (back-end) containers, on Docker (compose) and Kubernetes.
