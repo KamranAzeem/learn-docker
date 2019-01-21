@@ -81,7 +81,7 @@ Set a name for this vm in /etc/hosts, say tomcat.example.com , on host computer.
 ```
 
 
-![Traefik-1.png](Traefik-1.png)
+![images/Traefik-1.png](images/Traefik-1.png)
 
 
 Download the latest version of traffic from: [https://github.com/containous/traefik/releases](https://github.com/containous/traefik/releases) . It is a single binary file, so just download and place it in `/usr/local/bin/` or somewhere else you like. It is about 60-70 MB in size.
@@ -172,9 +172,9 @@ Jan 20 17:01:02 centos7 systemd[1]: Started Traefik reverse proxy / edge router.
 
 Two Screenshots , one with traffic dashboard, and the other with tomcat without 8080:
 
-![Traefik-2.png](Traefik-2.png)
+![images/Traefik-2.png](images/Traefik-2.png)
 
-![Traefik-3.png](Traefik-3.png)
+![images/Traefik-3.png](images/Traefik-3.png)
 
 
 ## Basic Authentication:
@@ -203,7 +203,7 @@ admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa
 
 
 Here is screenshot with Authentication dialogue:
-![Traefik-4.png](Traefik-4.png)
+![images/Traefik-4.png](images/Traefik-4.png)
 
 # Docker-compose:
 
