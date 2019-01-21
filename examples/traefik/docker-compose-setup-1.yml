@@ -4,7 +4,7 @@ services:
     image: traefik:alpine
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /opt/containers/personal/traefik/traefik.toml:/etc/traefik/traefik.toml
+      - ${PWD}/traefik-for-docker-setup-1.toml:/etc/traefik/traefik.toml
     ports:
       - 80:80
       - 443:443
@@ -14,10 +14,10 @@ services:
     labels:
       - traefik.frontend.rule=Host:www.example.com,example.com
     volumes:
-      - /opt/containers/personal/nginx/html:/usr/share/nginx/html
+      - ${PWD}/example.com-index.html:/usr/share/nginx/html/index.html
   apache:
     image: httpd:alpine
     labels:
       - traefik.frontend.rule=Host:www.example.net,example.net
     volumes:
-      - /opt/containers/personal/apache/html:/usr/local/apache2/htdocs
+      - ${PWD}/example.net-index.html:/usr/local/apache2/htdocs/index.html

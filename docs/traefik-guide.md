@@ -205,10 +205,79 @@ admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa
 Here is screenshot with Authentication dialogue:
 ![images/Traefik-4.png](images/Traefik-4.png)
 
+
 # Docker-compose:
+In docker compose, I will discuss two scenarios.
+
+* Two different web servers, serving two different websites / domains. This requires modifying traefik configuration at run time using certain labels from within docker-compose file.
+* Two (or more) different services, running on different ports but part of same domain. e.g. apache, jenkins, artifactory, jira, confluence within a single orgaization.
+
+
+## Setup-1: Traefik in front of two web-servers serving two different websites
+Setup:
+* Traefik
+* NGINX
+* Apache
+
+```
+[kamran@kworkhorse traefik]$ docker-compose up -d
+Creating traefik_nginx_1   ... done
+Creating traefik_traefik_1 ... done
+Creating traefik_apache_1  ... done
+[kamran@kworkhorse traefik]$
+```
+
+
+```
+[kamran@kworkhorse traefik]$ docker-compose ps
+      Name                 Command           State                                Ports                              
+---------------------------------------------------------------------------------------------------------------------
+traefik_apache_1    httpd-foreground         Up      80/tcp                                                          
+traefik_nginx_1     nginx -g daemon off;     Up      80/tcp                                                          
+traefik_traefik_1   /entrypoint.sh traefik   Up      0.0.0.0:443->443/tcp, 0.0.0.0:80->80/tcp, 0.0.0.0:8080->8080/tcp
+[kamran@kworkhorse traefik]$
+```
+
+
+![traefik-setup-1-1.png](traefik-setup-1-1.png)
+
+![traefik-setup-1-2.png](traefik-setup-1-2.png)
+
+![traefik-setup-1-3.png](traefik-setup-1-3.png)
 
 
 
+## Setup-2: Traefik in front of multiple backend services, same domain
+Setup:
+* Traefik
+* NGINX
+* Tomcat
+* jenkins:alpine
+
+```
+[kamran@kworkhorse traefik]$ docker-compose -f docker-compose-setup-2.yml  up -d
+Starting traefik_tomcat_1  ... done
+Starting traefik_nginx_1   ... done
+Starting traefik_jenkins_1 ... done
+Starting traefik_traefik_1 ... done
+[kamran@kworkhorse traefik]$
+```
 
 
+```
+[kamran@kworkhorse traefik]$ docker-compose -f docker-compose-setup-2.yml  ps
+      Name                     Command               State                                Ports                              
+-----------------------------------------------------------------------------------------------------------------------------
+traefik_jenkins_1   /bin/tini -- /usr/local/bi ...   Up      50000/tcp, 8080/tcp                                             
+traefik_nginx_1     nginx -g daemon off;             Up      80/tcp                                                          
+traefik_tomcat_1    catalina.sh run                  Up      8080/tcp                                                        
+traefik_traefik_1   /entrypoint.sh traefik           Up      0.0.0.0:443->443/tcp, 0.0.0.0:80->80/tcp, 0.0.0.0:8080->8080/tcp
+[kamran@kworkhorse traefik]$ 
+```
+
+
+![traefik-setup-2-1.png](traefik-setup-2-1.png)
+![traefik-setup-2-2.png](traefik-setup-2-2.png)
+![traefik-setup-2-3.png](traefik-setup-2-3.png)
+![traefik-setup-2-4.png](traefik-setup-2-4.png)
 
