@@ -239,11 +239,11 @@ traefik_traefik_1   /entrypoint.sh traefik   Up      0.0.0.0:443->443/tcp, 0.0.0
 ```
 
 
-![traefik-setup-1-1.png](traefik-setup-1-1.png)
+![images/traefik-setup-1-1.png](images/traefik-setup-1-1.png)
 
-![traefik-setup-1-2.png](traefik-setup-1-2.png)
+![images/traefik-setup-1-2.png](images/traefik-setup-1-2.png)
 
-![traefik-setup-1-3.png](traefik-setup-1-3.png)
+![images/traefik-setup-1-3.png](images/traefik-setup-1-3.png)
 
 
 
@@ -276,8 +276,8 @@ traefik_traefik_1   /entrypoint.sh traefik           Up      0.0.0.0:443->443/tc
 ```
 
 
-![traefik-setup-2-1.png](traefik-setup-2-1.png)
-![traefik-setup-2-2.png](traefik-setup-2-2.png)
-![traefik-setup-2-3.png](traefik-setup-2-3.png)
-![traefik-setup-2-4.png](traefik-setup-2-4.png)
+![images/traefik-setup-2-1.png](images/traefik-setup-2-1.png)
+![images/traefik-setup-2-2.png](images/traefik-setup-2-2.png)
+![images/traefik-setup-2-3.png](images/traefik-setup-2-3.png)
+![images/traefik-setup-2-4.png](images/traefik-setup-2-4.png)
 
