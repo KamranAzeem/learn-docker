@@ -3,6 +3,10 @@ services:
 
   traefik:
     image: traefik:alpine
+    labels:
+      - traefik.frontend.rule=Host:traefik.example.org
+      - traefik.port=8080
+      - traefik.enable=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PWD}/traefik.toml:/etc/traefik/traefik.toml
@@ -13,11 +17,19 @@ services:
 
   nginx:
     image: nginx:alpine 
+    labels:
+      - traefik.frontend.rule=Host:www.example.com,example.com
+      - traefik.port=80
+      - traefik.enable=true
     volumes:
       - ${PWD}/example.com-index.html:/usr/share/nginx/html/index.html
 
+
   tomcat:
     image: tomcat:alpine
+    labels:
+      - traefik.port=8080
+      - traefik.frontend.rule=Host:tomcat.example.com
     volumes:
       - ${PWD}/sample.war:/usr/share/tomcat/webapps/sample.war
 

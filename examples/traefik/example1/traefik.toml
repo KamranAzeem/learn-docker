@@ -9,4 +9,5 @@ logLevel = "INFO"
 
 [docker]
 endpoint = "unix:///var/run/docker.sock"
-exposedByDefault = false
+
+exposedByDefault = true
