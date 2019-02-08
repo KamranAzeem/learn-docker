@@ -1,0 +1,12 @@
+logLevel = "INFO"
+
+[entryPoints]
+    [entryPoints.http]
+    address = ":80"
+[api]
+  dashboard = true
+[ping]
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+exposedByDefault = false
