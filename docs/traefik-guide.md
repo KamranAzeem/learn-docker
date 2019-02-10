@@ -18,6 +18,8 @@ Topics covered are:
 
 
 ------
+Ignore anything below this line - for now. This needs re-arrangement.
+
 
 * Traefik running as a service, working as reverse proxy for tomcat:8080, jenkins:8080
  * SSL with self signed certificates in traefik instead of tomcat
