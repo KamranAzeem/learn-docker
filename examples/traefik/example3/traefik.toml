@@ -15,6 +15,16 @@ logLevel = "INFO"
 [entryPoints]
   [entryPoints.http]
   address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "/certs/tls.crt"
+      keyFile = "/certs/tls.key"
+
 
   [entryPoints.dashboard]
   address = ":8080"

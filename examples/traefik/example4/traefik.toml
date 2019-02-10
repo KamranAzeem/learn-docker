@@ -15,6 +15,13 @@ logLevel = "INFO"
 [entryPoints]
   [entryPoints.http]
   address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
 
   [entryPoints.dashboard]
   address = ":8080"
@@ -23,5 +30,23 @@ logLevel = "INFO"
     # admin/secret
     # users = ["admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa"]
     users = ["kamran:$2y$05$oCAwtNymC1be9.uDq.LbG./1ENktYoGKU.KNo5o7.DL26FJVGCiY2"]
+
+[acme]
+email = "kamranazeem@gmail.com"
+storage = "/acme.json"
+
+# CA server to use.
+# Uncomment the 'caServer' line to use Let's Encrypt's staging server,
+#   leave commented to goto/use prod certificates.
+#
+# caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+entryPoint = "https"
+  [acme.dnsChallenge]
+  provider = "route53"
+  delayBeforeCheck = 0
+
+[[acme.domains]]
+  main = "*.wbitt.com"
 
 
