@@ -3,7 +3,19 @@
 In this guide, I will show various ways traefik can be used as a reverse proxy for your (back-end) systemd services and containers, on Docker (compose) and Kubernetes.
 
 
+## Docker / Docker-compose:
 For clear docker examples, please see `example*` directories under the `traefik` directory.
+
+Topics covered are:
+* Basic setup:
+* Simple setup without traefik config file
+* Setup with Traefik config file
+* Routing Rules / Frontend rules, with correct host route rules
+* exposebyDefault true/false
+* Dashboard protection with password
+* SSL with self signed (wild-card) certificate
+* SSL with public/valid (wild-card) certificates, using letsencrypt, with DNS challenge
+
 
 ------
 
