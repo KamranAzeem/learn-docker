@@ -1,14 +1,26 @@
 # Traefik made easy
 
-In this guide, I will show various ways traefik can be used as a reverse proxy for your (back-end) containers, on Docker (compose) and Kubernetes.
+In this guide, I will show various ways traefik can be used as a reverse proxy for your (back-end) systemd services and containers, on Docker (compose) and Kubernetes.
 
-**Note:** The Kubernetes stuff will be in this file - temporarily, but will later move to the learn-kubernetes repository.
+
+For clear docker examples, please see `example*` directories under the `traefik` directory.
+
+------
 
 * Traefik running as a service, working as reverse proxy for tomcat:8080, jenkins:8080
  * SSL with self signed certificates in traefik instead of tomcat
  * script to create self signed certs
 * Traefik running in docker-compose with tomcat:8080, and jenkins:8080
 * Traefik running as reverse proxy for two different websites www.example.com, www.example.net,
+
+**References:**
+* https://docs.traefik.io/basics/
+* https://docs.traefik.io/user-guide/examples/
+* https://www.digitalocean.com/community/tutorials/how-to-use-traefik-as-a-reverse-proxy-for-docker-containers-on-ubuntu-18-04
+* https://www.digitalocean.com/community/tutorials/how-to-use-traefik-as-a-reverse-proxy-for-docker-containers-on-ubuntu-18-04
+* https://medium.com/@geraldcroes/kubernetes-traefik-101-when-simplicity-matters-957eeede2cf8
+* 
+* https://medium.com/@xavier.priour/secure-traefik-dashboard-with-https-and-password-in-docker-5b657e2aa15f
 
 
 # VM setup:
@@ -109,21 +121,23 @@ Adjust the traefik config file:
     address = ":8090"
       [entryPoints.dashboard.auth.basic]
       users = ["admin:$2y$08$64hQda74gXS80mS63hN3xOFGVB9KA2vUOXtW.NDaBjX9pEHq7qdUa"]
-[file]
-  [frontends]
-    [frontends.tomcat]
-    backend = "tomcat"
-      [frontends.tomcat.routes.test_1]
-      rule = "Host: tomcat.example.com"
-  [backends]
-    [backends.tomcat]
-      [backends.tomcat.servers.server1]
-      url = "http://127.0.0.1:8080"
 [api]
   dashboard = true
   entryPoint = "dashboard"
 [ping]
   entrypoint = "dashboard"
+
+[file]
+  [frontends]
+    [frontends.tomcat]
+    backend = "tomcat"
+      [frontends.tomcat.routes.rule1]
+      rule = "Host: tomcat.example.com"
+  [backends]
+    [backends.tomcat]
+      [backends.tomcat.servers.server1]
+      url = "http://127.0.0.1:8080"
+
 [root@centos7 ~]# 
 ```
 
