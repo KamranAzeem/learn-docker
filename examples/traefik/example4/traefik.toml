@@ -32,7 +32,7 @@ logLevel = "INFO"
     users = ["kamran:$2y$05$oCAwtNymC1be9.uDq.LbG./1ENktYoGKU.KNo5o7.DL26FJVGCiY2"]
 
 [acme]
-email = "kamranazeem@gmail.com"
+email = "someone@somedomain.tld"
 storage = "/acme.json"
 
 # CA server to use.
