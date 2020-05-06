@@ -39,6 +39,7 @@ c46f23496264        host                host                local
 * At start up, Docker engine finds an unused network subnet on the docker host (normally `172.17.0.0/16`), and assigns the first IP address of that network (normally  `172.17.0.1`) to the default bridge - `docker0`.
 * There is **no service discovery** on default bridge.
 
+Lets look at network interfaces on the host computer:
 ```
 dockerhost ~]$ ip addr show
 . . .  
@@ -54,7 +55,7 @@ dockerhost ~]$ ip addr show
 ```
 **Note:** `state` is *DOWN* when there are no running containers attached to this network interface/bridge.
 
-
+Run two containers, which will automatically be connected to the default bridge:
 ```
 dockerhost ~]$ docker run --name web \
                  -d praqma/network-multitool
@@ -70,6 +71,7 @@ CONTAINER ID	 IMAGE                    COMMAND                 PORTS   NAMES
 8c3f594512b1  praqma/network-multitool  "nginx -g 'daemon of…"  80/tcp  web
 ```
 
+Inspect the bridge:
 ```
 dockerhost ~]$ docker network inspect bridge
 . . . 
@@ -90,13 +92,9 @@ dockerhost ~]$ docker network inspect bridge
 "com.docker.network.bridge.name": "docker0",
 ```
 
-| ![images/docker-bridge-network-veth-1.png](images/docker-bridge-network-veth-1.png) |
-| ----------------------------------------------------------------------------------- |
+### The `veth` interfaces on bridge networks:
 
-
-| ![images/docker-bridge-network-veth-2.png](images/docker-bridge-network-veth-2.png) |
-| ----------------------------------------------------------------------------------- |
-
+When containers are run and connected to bridge networks, a pair of network sockets is created. One is assigned to the container as `eth0`, and the other is assigned/connected to the bridge as `vethX`, where *X* is a random string.
 ```
 dockerhost $ ip addr show
 . . . 
@@ -111,6 +109,13 @@ dockerhost $ ip addr show
     link/ether 52:83:73:27:cf:e3 brd ff:ff:ff:ff:ff:ff link-netnsid 1
 . . . 
 ```
+
+| ![images/docker-bridge-network-veth-1.png](images/docker-bridge-network-veth-1.png) |
+| ----------------------------------------------------------------------------------- |
+
+
+| ![images/docker-bridge-network-veth-2.png](images/docker-bridge-network-veth-2.png) |
+| ----------------------------------------------------------------------------------- |
 
 ### Inspect containers connected to the bridge network:
 
@@ -164,11 +169,12 @@ J
 
 
 ## "User-defined" bridge network:
+Users can create their own docker network. It has certain advantages, most importantly *service discovery*.
 
 | ![images/docker-user-defined-bridge-network.png](images/docker-user-defined-bridge-network.png)| 
 | ---------------------------------------------------------------------------------------------- |
 
-
+Create a bridge network:
 ```
 dockerhost ~]$ docker network create mynet
 
@@ -185,7 +191,7 @@ dockerhost ~]$ docker network inspect mynet
     "Gateway": "172.18.0.1"
 . . . 
 ```
-
+It should show up as a network interface on the host with the name `br-<random-string>` .
 ```
 dockerhost ~]$ ip addr show
 . . . 
@@ -199,11 +205,10 @@ dockerhost ~]$ ip addr show
 
 . . . 
 ```
-Notice the ID of the "mynet" bridge is "br-b63e..."
+Notice the ID of the "mynet" bridge is "br-b63e...". 
 
+Now run two containers and connect them on this network you created just now:
 ```
-dockerhost ~]$ docker network create mynet
-
 dockerhost ~]$ docker run --name=web --network=mynet \
              -d praqma/network-multitool
 
@@ -217,6 +222,7 @@ CONTAINER ID  IMAGE                     COMMAND                 PORTS     NAMES
 1d480f66ce00  praqma/network-multitool  "nginx -g 'daemon of…"  80/tcp    web
 ```
 
+Inspect the network:
 ```
 dockerhost ~]$ docker network inspect mynet
 . . .
@@ -232,7 +238,7 @@ dockerhost ~]$ docker network inspect mynet
                 "MacAddress": "02:42:ac:12:00:03",
                 "IPv4Address": "172.18.0.3/16",
 ```
-Notice that the containers connected to the mynet show up in the output when the network "mynet" is inspected.
+Notice that the containers connected to the `mynet` show up in the output when the network "mynet" is inspected.
 
 ### Service Discovery on user-defined bridge:
 **There is (DNS based) service discovery** on user-defined bridge. How it works? and how it looks like? - is explained next.
@@ -240,6 +246,7 @@ Notice that the containers connected to the mynet show up in the output when the
 | ![images/docker-service-discovery-1.png](images/docker-service-discovery-1.png) |
 | ------------------------------------------------------------------------------- |
 
+Exec into a container connected to the network you created just now. Notice that it can resolve the names of the other containers on the same network.
 ```
 dockerhost ~]$ docker exec -it web /bin/sh
 
@@ -257,11 +264,12 @@ PING yahoo.com (72.30.35.10) 56(84) bytes of data.
 . . . 
 ```
 
-### Embedded DNS on user-defined network:
-
+Above works, because there is an **embedded DNS** in the docker service on the host computer. It is explained below.
+ 
 | ![images/docker-service-discovery-2.png](images/docker-service-discovery-2.png) |
 | ------------------------------------------------------------------------------- |
 
+Exec into a container connected to `mynet`, and do some investigation.
 ```
 dockerhost ~]$ docker exec web cat /etc/resolv.conf
 search home.wbitt.com
@@ -281,13 +289,17 @@ tcp        0      0 0.0.0.0:80        0.0.0.0:*         LISTEN      1/nginx
 udp        0      0 127.0.0.11:38657  0.0.0.0:*                     -
 ```
 
-### So where is the DNS server?
-Let’s add another container to "mynet", to look under the hood. We need some extra CAP-abilities for our container being used for investigation.
+The `/etc/resolv.conf` says that the DNS is available at `127.0.0.11`, and on port `53`, which is implied. But, the `netstat` output does not show any process listening on port `53`, neither on TCP, nor UDP. So where is the DNS server?
+
+Let’s add a *tools* container to "mynet", to look under the hood. We need some extra *CAP-abilities* for our container being used for investigation.
 
 ```
-$dockerhost ~] docker run --cap-add=NET_ADMIN --cap-add=NET_RAW \
-                 --name multitool --network mynet \
-                 -it praqma/network-multitool /bin/bash
+$dockerhost ~] docker run \
+                  --name multitool \
+                  --network mynet \
+                  --cap-add=NET_ADMIN \
+                  --cap-add=NET_RAW \
+                  -it praqma/network-multitool /bin/bash
 
 bash-5.0# ping -c 1 db
 PING db (172.18.0.3) 56(84) bytes of data.
@@ -295,15 +307,16 @@ PING db (172.18.0.3) 56(84) bytes of data.
 
 bash-5.0# dig db
 ;; QUESTION SECTION:
-;db.				IN	A
+;db.        IN    A
 
 ;; ANSWER SECTION:
-db.			600	IN	A	172.18.0.3
+db.     600	IN    A   172.18.0.3
 
 ;; SERVER: 127.0.0.11#53(127.0.0.11)
 ```
-Notice the DNS server responding to our queries is: `127.0.0.11#53` , but we don't see a process running on port `53` in this container! So what is going on here?
+Notice the DNS server responding to our DNS queries is: `127.0.0.11#53` , but we don't see a process running on port `53` in this container! So what is going on here?
 
+Check netstat output on this *tools* container:
 ```
 bash-5.0# netstat -ntlup
 Active Internet connections (only servers)
@@ -311,13 +324,14 @@ Proto Recv-Q Send-Q Local Address       Foreign Address     State      PID/Progr
 tcp        0      0 127.0.0.11:37553    0.0.0.0:*           LISTEN     -  
 udp        0      0 127.0.0.11:35464    0.0.0.0:*                      - 
 ```
-**Questions:**
+**Observations:**
 * The ports `37553` and `35464` do not look like DNS server ports! So what are these?
-* In the output above, why these processes inside the container do not have PIDs?
+* Why these processes inside the container do not have PIDs?
 
 
-Answer to DNS mystery - IPTables magic!
+Answer to all DNS mystery - **IPTables magic!**
 
+Check the iptables rules in the tools container:
 ```
 bash-5.0# iptables-save 
 *nat
@@ -338,17 +352,26 @@ bash-5.0# iptables-save
 -A DOCKER_POSTROUTING -s 127.0.0.11/32 -p tcp -m tcp --sport 37553 -j SNAT --to-source :53
 -A DOCKER_POSTROUTING -s 127.0.0.11/32 -p udp -m udp --sport 35464 -j SNAT --to-source :53
 ```
+**Explanation:**
+From the `iptables` rules, we learn that any (DNS query) traffic looking for `127.0.0.11:53` is actually redirected to `127.0.0.11:37553` (for TCP), and to `127.0.0.11:35464` (for UDP). 
+
+There is a docker process running on these ports inside the container, which are actually docker's embedded DNS's hooks. When anything is sent on these hooks, docker's embedded DNS responds with the results of the query.
+
+The last two `iptables` rules show that when the results/return DNS traffic is received from these two special ports (or processes), they are changed back (SNAT - Source Network Address Translation) to the same IP address but with port 53 as source port. For the innocent `dig` or `nslookup` commands, the query went to `127.0.0.11:53` and results came back from the same. This is the story!
+ 
+
 **Notes:**
 * Above (`iptables` command) won't work without adding certain CAP-abilities to the container at run time. That is why we used the extra CAP-abilities: `--cap-add=NET_ADMIN` and `--cap-add=NET_RAW`
 * By Default DNS uses UDP for queries less than 512 bytes. It switches to TCP for queries larger than 512 bytes. UDP is faster, simpler and lighter.
 
 
 
+
 ## "Compose-defined" bridge network:
 
-This is exactly the same as *user-defined* bridge, except docker-compose creates it automatically, when you bring up a docker-compose based application stack.
+This is exactly the same as *user-defined* bridge, except `docker-compose` creates it automatically, when you bring up a `docker-compose` based application stack.
 
-Here is a simple docker-compose application stack:
+Here is a simple `docker-compose` application stack:
 ```
 simpleweb]$ cat docker-compose.yml 
 version: "3"
@@ -361,6 +384,7 @@ services:
       - POSTGRES_PASSWORD=secret
 ```
 
+Bring up the compose stack and investigate it's networking. 
 ```
 simpleweb]$ docker-compose up -d
 Creating network "simpleweb_default" 
@@ -396,16 +420,17 @@ dockerhost ~]$ ip addr show
 33: veth2ed0387@if32: <... UP,LOWER_UP> ... master br-245ef6384978 state UP 
       link/ether 62:6f:4c:77:19:4f brd ff:ff:ff:ff:ff:ff link-netnsid 3
 ```
-Notice the new bridge is created for the compose application, and two veth interfaces showing up for the two containers connected on that bridge.
+Notice the new bridge is created for the compose application, and two `veth` interfaces show up for the two containers connected on that bridge.
 
 
 | ![images/docker-compose-defined-bridge-network.png](images/docker-compose-defined-bridge-network.png) |
 | ----------------------------------------------------------------------------------------------------- |
 
 ## Other aspects of bridge networks:
-### No service discovery and no communication b/w different bridge networks:
+### No service discovery and no communication b/w "different" bridge networks:
 In case there are multiple docker networks on the same computer, containers from one network do not know about containers on the other network, nor can they talk to them. This is a good thing to have for security reasons.
 
+Here is how it is investigated:
 ```
 dockerhost ~]$ docker exec -it simpleweb_apache_1 /bin/sh
 
@@ -426,7 +451,7 @@ PING 172.18.0.1 (172.18.0.1): 56 data bytes
 ```
 Notice, containers of one bridge network are not able to resolve names of containers on the other docker networks, and unable to talk to containers on other docker networks - which is *Good!*
 
-Same applies for the containers on the other network:
+Same applies for the containers on the *other* network:
 ```
 dockerhost]$ docker exec -it web /bin/sh
 
@@ -446,8 +471,8 @@ PING 172.19.0.1 (172.19.0.1) 56(84) bytes of data.
 64 bytes from 172.19.0.1: icmp_seq=1 ttl=64 time=0.081 ms
 ``` 
 
-### Containers on any docker network on the same host, are accessible from host computer:
-
+### Accessibility from host computer:
+All containers on any docker (bridge) network, are accessible from the host on the network layer. Below, we can see that our host computer can access containers from two different bridge networks.
 ```
 dockerhost]$ ping 172.18.0.2
 PING 172.18.0.2 (172.18.0.2) 56(84) bytes of data.
@@ -501,6 +526,7 @@ dockerhost ~]$ docker exec -it multitool /bin/sh
     inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
 ```
 
+Inspect the container, and investigate it's networking.
 ```
 dockerhost ~]$ docker container inspect nginx 
 . . . 
@@ -534,8 +560,8 @@ dockerhost ~]$ curl localhost
 Praqma Network MultiTool (with NGINX) - kworkhorse.home.wbitt.com -  
 ```
 **Notes:**
-* Since the container is using host’s network, it’s services are accessible directly on host computer, using `localhost`.
-* The multitool container's *entrypoint* script is supposed to create the above web-page, with container's IP in it. Since the container does not have any network interfaces of it’s own, there is no IP address in the output of the curl command!
+* The multitool container's *entrypoint* script is responsible to create the above web-page with container's IP in it. Since the container does not have any network interfaces of it’s own, the script did not find any IP address for it, and left the IP address empty in the generated web-page. That is why there is no IP address in the output of the `curl` command above!
+* Since the container is using host’s network, it’s services are accessible directly on host computer, using `localhost` and on the network IP address of the host connected to LAN/wifi.
 
 ## The "None" network:
 
@@ -549,10 +575,12 @@ Praqma Network MultiTool (with NGINX) - kworkhorse.home.wbitt.com -
 * Port-mapping does not take effect.  “-p”, and  “-P” options are ignored. 
 * Used as a security sandbox, to test something in complete isolation.
 
-
+Lets run a container by connecting it to the "none" network:
 ```
-dockerhost ~]$ docker run --name multitool --network none -p 80:80 \
-                 -d praqma/network-multitool
+dockerhost ~]$ docker run --name multitool \
+                --network none \
+                -p 80:80 \
+                -d praqma/network-multitool
 
 dockerhost ~]$ docker ps
 CONTAINER ID  IMAGE   COMMAND     CREATED     STATUS    PORTS   NAMES
@@ -573,20 +601,22 @@ Notice that passing `-p 80:80` has no effect. Also notice there are no network i
 
 ------
 # Join one container to another container
+Most of the times, the containers are very limited in terms of how much software/tools are inside them. This is done to keep their size small, and also for security reasons. However, troubleshooting them becomes very difficult, as they don't have enough tools in them. There is a possibility to join a *tools* container to a *main* container. 
 
-## Join one container to another container’s network namespace
+Examples of such limited containers are: `nginx`, `mysql`, etc, or images built from `scratch`. 
+Examples of tools containers are: `busybox`, `alpine`, `praqma/network-multitool` , etc.
+
+## Join one container to another container’s network namespace:
 
 | ![images/join-container-network.png](images/join-container-network.png) |
 | ----------------------------------------------------------------------- |
 
-
-* Used to troubleshoot containers which do not have troubleshooting tools inside them. e.g. nginx, mysql, etc, or images built from `scratch`
 * The container being joined does not have an IP of it’s own. It joins the IP/network namespace of the main container.
 * No extra `veth` interfaces are created on the host for the joining container. 
 * The container being joined is not able to see the processes of the main container.
 
 
-Lets run a typical mysql container, which does not have any troubleshooting tools inside it:
+Lets run a typical `mysql` container, which does not have any troubleshooting tools inside it. Investigate the container, using network and process management tools:
 
 ```
 dockerhost ~]$ docker run --name mysql -e MYSQL_ROOT_PASSWORD=secret -d mysql
@@ -607,9 +637,9 @@ dockerhost ~]$ docker exec -it mysql /bin/sh
 /bin/sh: 4: ps: not found
 ```
 
-Attach a tools container to this container for troubleshooting:
+Alright, lets attach a *tools* container to this container for troubleshooting:
 
-``` 
+```
 dockerhost ~]$ docker run --name busybox \
                  --network container:mysql \
                  --rm -it busybox /bin/sh
@@ -629,7 +659,7 @@ tcp6       0      0 :::3306       :::*          	LISTEN	-
 64 bytes from 8.8.8.8: icmp_seq=1 ttl=54 time=17.4 ms
 ```
 
-Check How do things look from Docker’s perspective?
+Investigate how do things look from Docker’s perspective:
 ```
 dockerhost ~]$ docker ps
 CONTAINER ID  IMAGE     COMMAND     CREATED     STATUS     PORTS      NAMES
@@ -649,10 +679,9 @@ dockerhost ~]$ docker inspect multitool
         "IPAddress": "",
         "MacAddress": "",
 ```
+Notice that the tools container does not have an IP address.
 
-Can we see processes inside another container?
-* Joining a container to the network of existing/main container does not show processes from the main container, as shown below.
-* Joining a container’s network does not help if we want to run process troubleshooting tools, such as `ps`, `strace`, `gdb`, etc, on the processes in the main container. 
+Now, when a container is joined to another contianer's network namespace, can we also see processes inside the other container? Unfortunately, not. Joining a container’s network does not help if we want to run process troubleshooting tools, such as `ps`, `strace`, `gdb`, etc, on the processes in the main container, because the processes from the main container are not visible to the tools container.
 
 ```
 dockerhost ~]$ docker run --name busybox \
@@ -668,12 +697,13 @@ PID   USER     TIME  COMMAND
 Notice, we are Inside the `busybox` container, and there is no `mysql` process visible.
 
 ## Join a container to process-namespace of another container
+To be able to manage the processes of the main container, the tools container should be connected to the process namespace of the main container.
 
 | ![images/join-container-process.png](images/join-container-process.png) |
 | ----------------------------------------------------------------------- |
 
 
-To look at the processes of the main container, make the `busybox` container join the *process-namespace* of the mysql container, using: `--pid container:<MainContainerID>` 
+To look at the processes of the main `mysql` container, make the `busybox` container join the *process-namespace* of the `mysql` container, using: `--pid container:<MainContainerID>` 
 
 ```
 dockerhost ~]$ docker run --name busybox \
@@ -699,15 +729,15 @@ Remember, when run this way, the joining container gets its own network stack, d
 48: eth0@if49: <...UP,LOWER_UP,M-DOWN> mtu 1500 qdisc noqueue 
     inet 172.17.0.3/16 brd 172.17.255.255 scope global eth0
 ```
-Notice the IP of mysql container is `172.17.0.2`, which is different from the one in the `busybox` container.
+Notice the IP of mysql container is `172.17.0.2`, which is different from the one in the `busybox` container shown here.
 
 ## Join the network and process namespace of the main container in single step!
-We can actually join a *tools* container to both network and process namespaces of the main container.
+We can actually join a *tools* container to both network and process namespaces of the main container. That way, we can manage / work with both the networking and the process-management of the main container.
 
 | ![images/join-container-process-network.png](images/join-container-process-network.png) |
 | --------------------------------------------------------------------------------------- |
 
-
+Here is how it works:
 ```
 dockerhost ~]$ docker run --name busybox \
                  --network container:mysql \
@@ -726,5 +756,5 @@ PID   USER     TIME  COMMAND
   513 root      0:00 /bin/sh
   518 root      0:00 ps aux
 ```
-Notice the IP & MAC of mysql container, and processes from both containers - all visible in the busybox container!
+Notice the IP & MAC of `mysql` container, and processes from both containers - all visible in the `busybox` container!
 
