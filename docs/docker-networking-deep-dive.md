@@ -32,9 +32,12 @@ ab382bcb8342        bridge              bridge              local
 c46f23496264        host                host                local
 2c77e24c2352        none                null                local
 ```
+Here is how the default bridge network looks like:
 
 | ![images/docker-bridge-network-1.png](images/docker-bridge-network-1.png) |
 | ------------------------------------------------------------------------- |
+
+Another way to look at the default bridge network:
 
 | ![images/docker-bridge-network-2.png](images/docker-bridge-network-2.png) |
 | ------------------------------------------------------------------------- |
