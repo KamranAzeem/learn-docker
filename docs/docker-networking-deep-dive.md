@@ -1,18 +1,23 @@
 # Docker Networking Deep Dive
+Docker networking is a very interesting topic, and I have been hoping to write about it for a long time. I hope you enjoy this article as much as I enjoyed writing it! 
 
+In this article, I have explained different networking modes available in docker, the mechanisms of service discovery, and procedure to join containers to each other for troubleshooting. 
 
-Default Docker networks:
+**Note:** The examples are from a docker host running **Fedora Linux 31**, and **Docker Engine 19.03.8** . 
+
+The following networks are available to you *by default*, when you install docker on your computer.
 * Bridge - NAT - docker0
 * None - Isolated / no networking
 * Host - Uses host network s
 
-Other Docker networks:
+Other Docker networks are the following, but are *not* covered in this document.
 * Overlay - Swarm mode
 * Macvlan - Legacy applications needing direct connection to physical network
 * 3rd party network plugins
 
 
-In case you are wondering, **a software bridge is a (software) network switch!**
+**Note:** In case you are wondering, in very simple terms, **a software bridge is just another name for a (software) network switch!**
+
 
 ## docker0 - The default "Bridge" network
 
@@ -243,10 +248,7 @@ Notice that the containers connected to the `mynet` show up in the output when t
 ### Service Discovery on user-defined bridge:
 **There is (DNS based) service discovery** on user-defined bridge. How it works? and how it looks like? - is explained next.
 
-| ![images/docker-service-discovery-1.png](images/docker-service-discovery-1.png) |
-| ------------------------------------------------------------------------------- |
-
-Exec into a container connected to the network you created just now. Notice that it can resolve the names of the other containers on the same network.
+`exec` into a container connected to the network you created just now. Notice that it can resolve the names of the other containers on the same network.
 ```
 dockerhost ~]$ docker exec -it web /bin/sh
 
@@ -269,7 +271,7 @@ Above works, because there is an **embedded DNS** in the docker service on the h
 | ![images/docker-service-discovery-2.png](images/docker-service-discovery-2.png) |
 | ------------------------------------------------------------------------------- |
 
-Exec into a container connected to `mynet`, and do some investigation.
+`exec` into a container connected to `mynet`, and do some investigation.
 ```
 dockerhost ~]$ docker exec web cat /etc/resolv.conf
 search home.wbitt.com
@@ -357,14 +359,14 @@ From the `iptables` rules, we learn that any (DNS query) traffic looking for `12
 
 There is a docker process running on these ports inside the container, which are actually docker's embedded DNS's hooks. When anything is sent on these hooks, docker's embedded DNS responds with the results of the query.
 
-The last two `iptables` rules show that when the results/return DNS traffic is received from these two special ports (or processes), they are changed back (SNAT - Source Network Address Translation) to the same IP address but with port 53 as source port. For the innocent `dig` or `nslookup` commands, the query went to `127.0.0.11:53` and results came back from the same. This is the story!
+The last two `iptables` rules show that when the results/return DNS traffic is received from these two special ports (or processes), they are changed back (SNAT - Source Network Address Translation) to the same IP address but with port 53 as source port. For the innocent `dig` or `nslookup` commands, the query went to `127.0.0.11:53` and results came back from the same. This is the story! Below is the diagram, which should help make sense of all of this explanation.
  
+| ![images/docker-service-discovery-1.png](images/docker-service-discovery-1.png) |
+| ------------------------------------------------------------------------------- |
 
 **Notes:**
 * Above (`iptables` command) won't work without adding certain CAP-abilities to the container at run time. That is why we used the extra CAP-abilities: `--cap-add=NET_ADMIN` and `--cap-add=NET_RAW`
 * By Default DNS uses UDP for queries less than 512 bytes. It switches to TCP for queries larger than 512 bytes. UDP is faster, simpler and lighter.
-
-
 
 
 ## "Compose-defined" bridge network:
