@@ -10,10 +10,10 @@ In this document, I have explained:
 
 The following networks are available to you *by default*, when you install docker on your computer.
 * Bridge - NAT - docker0
+* Host - Uses host network
 * None - Isolated / no networking
-* Host - Uses host network s
 
-Other Docker networks are the following, but are *not* covered in this document.
+Other Docker networks available to you are the following, but are *not* covered in this document.
 * Overlay - Swarm mode
 * Macvlan - Legacy applications needing direct connection to physical network
 * 3rd party network plugins
@@ -672,7 +672,7 @@ Investigate how do things look from Docker’s perspective:
 dockerhost ~]$ docker ps
 CONTAINER ID  IMAGE     COMMAND     CREATED     STATUS     PORTS      NAMES
 e53613c1ebe1  mysql     "docker …"  15 min ago  UP 15 min  3306/tcp   mysql
-2acc045dc3cd  multitool "/docker …" 12 min ago  Up 12 min             multitool
+2acc045dc3cd  busybox   "/docker …" 12 min ago  Up 12 min             busybox
 
 dockerhost ~]$ docker inspect mysql
     . . . 
@@ -680,7 +680,7 @@ dockerhost ~]$ docker inspect mysql
     . . . 
         "IPAddress": "172.17.0.2",
         "MacAddress": "02:42:ac:11:00:02",
-dockerhost ~]$ docker inspect multitool
+dockerhost ~]$ docker inspect busybox
     . . . 
     "NetworkMode": "container:e53613c1ebe1",
     . . . 
@@ -702,7 +702,7 @@ PID   USER     TIME  COMMAND
     6 root      0:00 ps aux
 / # 
 ```
-Notice, we are Inside the `busybox` container, and there is no `mysql` process visible.
+Notice, we are inside the `busybox` container, and there is no `mysql` process visible.
 
 ## Join a container to process-namespace of another container
 To be able to manage the processes of the main container, the tools container should be connected to the process namespace of the main container.
