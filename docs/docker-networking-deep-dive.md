@@ -1,7 +1,10 @@
 # Docker Networking Deep Dive
-Docker networking is a very interesting topic, and I have been hoping to write about it for a long time. I hope you enjoy this article as much as I enjoyed writing it! 
+Docker networking is a fascinating topic. When one knows how to use Docker, then knowing it's networking and other internals helps even more. 
 
-In this article, I have explained different networking modes available in docker, the mechanisms of service discovery, and procedure to join containers to each other for troubleshooting. 
+In this document, I have explained: 
+* different networking modes available in docker, 
+* the mechanisms of service discovery, 
+* and procedure to join containers to each other for troubleshooting.
 
 **Note:** The examples are from a docker host running **Fedora Linux 31**, and **Docker Engine 19.03.8** . 
 
