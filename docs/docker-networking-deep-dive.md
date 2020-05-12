@@ -372,7 +372,7 @@ The last two `iptables` rules show that when the results/return DNS traffic is r
 
 **Notes:**
 * Above (`iptables` command) won't work without adding certain CAP-abilities to the container at run time. That is why we used the extra CAP-abilities: `--cap-add=NET_ADMIN` and `--cap-add=NET_RAW`
-* By Default DNS uses UDP for queries less than 512 bytes. It switches to TCP for queries larger than 512 bytes. UDP is faster, simpler and lighter.
+* By default, DNS uses UDP for queries less than 512 bytes. It switches to TCP for queries larger than 512 bytes. UDP is faster, simpler and lighter.
 
 
 ## "Compose-defined" bridge network:
